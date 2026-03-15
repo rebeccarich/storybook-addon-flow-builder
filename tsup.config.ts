@@ -1,6 +1,6 @@
-import { defineConfig, type Options } from 'tsup';
+import { defineConfig, type Options } from 'tsup'
 
-const NODE_TARGET = 'node20.19'; // Minimum Node version supported by Storybook 10
+const NODE_TARGET = 'node20.19' // Minimum Node version supported by Storybook 10
 
 export default defineConfig(async () => {
   // reading the three types of entries from package.json, which has the following structure:
@@ -12,11 +12,11 @@ export default defineConfig(async () => {
   //     "nodeEntries": ["./src/preset.ts"]
   //   }
   // }
-  const packageJson = (await import('./package.json', { with: { type: 'json' } })).default;
+  const packageJson = (await import('./package.json', { with: { type: 'json' } })).default
 
   const {
-    bundler: { managerEntries = [], previewEntries = [], nodeEntries = [] },
-  } = packageJson;
+    bundler: { managerEntries = [], previewEntries = [], nodeEntries = [] }
+  } = packageJson
 
   const commonConfig: Options = {
     /*
@@ -31,10 +31,10 @@ export default defineConfig(async () => {
      The following packages are provided by Storybook and should always be externalized
      Meaning they shouldn't be bundled with the addon, and they shouldn't be regular dependencies either
     */
-    external: ['react', 'react-dom', '@storybook/icons'],
-  };
+    external: ['react', 'react-dom', '@storybook/icons']
+  }
 
-  const configs: Options[] = [];
+  const configs: Options[] = []
 
   /*
    manager entries are entries meant to be loaded into the manager UI
@@ -46,8 +46,8 @@ export default defineConfig(async () => {
       ...commonConfig,
       entry: managerEntries,
       platform: 'browser',
-      target: 'esnext', // we can use esnext for manager entries since Storybook will bundle the addon's manager entries again anyway
-    });
+      target: 'esnext' // we can use esnext for manager entries since Storybook will bundle the addon's manager entries again anyway
+    })
   }
 
   /*
@@ -61,8 +61,8 @@ export default defineConfig(async () => {
       entry: previewEntries,
       platform: 'browser',
       target: 'esnext', // we can use esnext for preview entries since the builders will bundle the addon's preview entries again anyway
-      dts: true,
-    });
+      dts: true
+    })
   }
 
   /*
@@ -75,9 +75,9 @@ export default defineConfig(async () => {
       ...commonConfig,
       entry: nodeEntries,
       platform: 'node',
-      target: NODE_TARGET,
-    });
+      target: NODE_TARGET
+    })
   }
 
-  return configs;
-});
+  return configs
+})

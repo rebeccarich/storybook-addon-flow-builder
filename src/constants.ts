@@ -1,10 +1,5 @@
-export const ADDON_ID = 'storybook-addon-flow-builder';
-export const TOOL_ID = `${ADDON_ID}/tool`;
-export const PANEL_ID = `${ADDON_ID}/panel`;
-export const TAB_ID = `${ADDON_ID}/tab`;
-export const KEY = `storybook-addon-flow-builder`;
+export const ADDON_ID = 'storybook-addon-flow-builder'
+export const TAB_ID = `${ADDON_ID}/tab`
+export const PARAM_KEY = 'flowbuilder'
 
-export const EVENTS = {
-  RESULT: `${ADDON_ID}/result`,
-  REQUEST: `${ADDON_ID}/request`,
-};
+export const DESIGNSYNC_LIBRARY_KEY = 'designsync:library'
