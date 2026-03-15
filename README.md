@@ -73,14 +73,14 @@ To get started, replace this README with the content in this sample template.
 ### Sample documentation template
 
 ````md
-# My Addon
+# Flow Builder
 
 ## Installation
 
 First, install the package.
 
 ```sh
-npm install --save-dev my-addon
+npm install --save-dev storybook-addon-flow-builder
 ```
 
 Then, register it as an addon in `.storybook/main.js`.
@@ -95,7 +95,7 @@ const config: StorybookConfig = {
   // ...rest of config
   addons: [
     '@storybook/addon-docs'
-    'my-addon', // 👈 register the addon here
+    'storybook-addon-flow-builder', // 👈 register the addon here
   ],
 };
 
@@ -118,7 +118,7 @@ import { Button } from './Button';
 const meta: Meta<typeof Button> = {
   component: Button,
   parameters: {
-    myAddon: {
+    flowBuilder: {
       exampleParameter: true,
       // See API section below for available parameters
     },
@@ -134,7 +134,7 @@ Another way to use the addon is...
 
 ### Parameters
 
-This addon contributes the following parameters to Storybook, under the `myAddon` namespace:
+This addon contributes the following parameters to Storybook, under the `flowBuilder` namespace:
 
 #### `disable`
 
@@ -160,9 +160,9 @@ const config: StorybookConfig = {
   addons: [
     '@storybook/addon-docs',
     {
-      name: 'my-addon',
+      name: 'storybook-addon-flow-builder',
       options: {
-        // 👈 options for my-addon go here
+        // 👈 options for storybook-addon-flow-builder go here
       },
     },
   ],

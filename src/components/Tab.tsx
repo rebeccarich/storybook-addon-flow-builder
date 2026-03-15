@@ -44,7 +44,7 @@ export const Tab: React.FC<TabProps> = ({ active }) => {
   return (
     <TabWrapper>
       <TabInner>
-        <H1>My Addon ({KEY})</H1>
+        <H1>Flow Builder ({KEY})</H1>
         <p>Your addon can create a custom tab in Storybook.</p>
         <p>
           You have full control over what content is being rendered here. You can use components from{' '}

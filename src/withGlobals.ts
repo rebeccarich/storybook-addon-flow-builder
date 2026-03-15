@@ -5,7 +5,7 @@ import { KEY } from './constants';
 
 export const withGlobals = (StoryFn: StoryFunction<Renderer>, context: StoryContext<Renderer>) => {
   const [globals] = useGlobals();
-  const myAddon = globals[KEY];
+  const flowBuilder = globals[KEY];
   const canvas = context.canvasElement as ParentNode;
 
   // Is the addon being used in the docs panel
@@ -14,10 +14,10 @@ export const withGlobals = (StoryFn: StoryFunction<Renderer>, context: StoryCont
   useEffect(() => {
     if (!isInDocs) {
       addExtraContentToStory(canvas, {
-        myAddon,
+        flowBuilder,
       });
     }
-  }, [myAddon, isInDocs]);
+  }, [flowBuilder, isInDocs]);
 
   return StoryFn();
 };

@@ -16,7 +16,7 @@ const meta: Meta<typeof Button> = {
   },
   tags: ['autodocs'],
   parameters: {
-    myAddonParameter: `
+    flowBuilderParameter: `
 <MyComponent boolProp scalarProp={1} complexProp={{ foo: 1, bar: '2' }}>
   <SomeOtherComponent funcProp={(a) => a.id} />
 </MyComponent>

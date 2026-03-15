@@ -4,7 +4,7 @@ import { IconButton } from 'storybook/internal/components';
 import { ADDON_ID, KEY, TOOL_ID } from '../constants';
 import { LightningIcon } from '@storybook/icons';
 
-export const Tool = memo(function MyAddonSelector({ api }: { api: API }) {
+export const Tool = memo(function FlowBuilderSelector({ api }: { api: API }) {
   const [globals, updateGlobals, storyGlobals] = useGlobals();
 
   const isLocked = KEY in storyGlobals;
@@ -27,7 +27,7 @@ export const Tool = memo(function MyAddonSelector({ api }: { api: API }) {
   }, [toggle, api]);
 
   return (
-    <IconButton key={TOOL_ID} active={isActive} disabled={isLocked} title="Enable my addon" onClick={toggle}>
+    <IconButton key={TOOL_ID} active={isActive} disabled={isLocked} title="Enable Flow Builder" onClick={toggle}>
       <LightningIcon />
     </IconButton>
   );
