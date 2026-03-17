@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useParameter, useStorybookApi, useStorybookState } from 'storybook/manager-api'
-import { Button, Placeholder } from 'storybook/internal/components'
+import { Button } from 'storybook/internal/components'
 import { styled } from 'storybook/theming'
 
 import { PARAM_KEY } from '../constants'

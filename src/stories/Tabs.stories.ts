@@ -1,10 +1,10 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Tabs } from './Tabs'
 
 const meta: Meta<typeof Tabs> = {
   title: 'Components/Tabs',
   component: Tabs,
-  tags: ['autodocs'],
+  tags: ['autodocs']
 }
 export default meta
 
@@ -15,18 +15,18 @@ export const Default: Story = {
     tabs: [
       { label: 'Profile', value: 'profile' },
       { label: 'Settings', value: 'settings' },
-      { label: 'Notifications', value: 'notifications' },
+      { label: 'Notifications', value: 'notifications' }
     ],
-    value: 'profile',
-  },
+    value: 'profile'
+  }
 }
 
 export const TwoTabs: Story = {
   args: {
     tabs: [
       { label: 'Sign In', value: 'signin' },
-      { label: 'Sign Up', value: 'signup' },
+      { label: 'Sign Up', value: 'signup' }
     ],
-    value: 'signin',
-  },
+    value: 'signin'
+  }
 }

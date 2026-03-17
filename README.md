@@ -2,7 +2,7 @@
   <img src="./logo.png"/>
   <span style="padding-left:24px;">Storybook Addon Flow Builder
   <p>    
-  <a href="https://github.com/kyechan99/capsule-render/issues">
+  <a href="https://github.com/rebeccarich/storybook-addon-flow-builder/issues">
     <img alt="Issues" src="https://img.shields.io/rebeccarich/storybook-addon-flow-builder?color=01a889" />
   </a>
   <a href="https://github.com/rebeccarich/storybook-addon-flow-builder/pulls">

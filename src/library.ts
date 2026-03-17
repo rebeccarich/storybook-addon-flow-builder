@@ -25,7 +25,7 @@ export function discoverFromStoryIndex(
     if (entry.title.startsWith('Configure')) continue
 
     const parts = entry.title.split('/')
-    const componentName = parts[parts.length - 1]
+    const componentName = parts[parts.length - 1] ?? entry.title
 
     const existing = componentMap.get(componentName)
     if (existing) {

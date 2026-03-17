@@ -1,10 +1,10 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Tooltip } from './Tooltip'
 
 const meta: Meta<typeof Tooltip> = {
   title: 'Components/Tooltip',
   component: Tooltip,
-  tags: ['autodocs'],
+  tags: ['autodocs']
 }
 export default meta
 
@@ -13,6 +13,6 @@ type Story = StoryObj<typeof Tooltip>
 export const Default: Story = {
   args: {
     text: 'This is a helpful tooltip',
-    children: 'Hover over me',
-  },
+    children: 'Hover over me'
+  }
 }

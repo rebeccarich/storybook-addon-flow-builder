@@ -1,4 +1,4 @@
-import type { ComponentLibrary, FlowPlan, FlowStep, LayoutNode } from './types'
+import type { ComponentLibrary, FlowPlan, LayoutNode } from './types'
 
 export function toPascalCase(s: string): string {
   return s
@@ -155,10 +155,34 @@ function componentImportFromStory(storyImportPath: string): string {
 }
 
 const HTML_ELEMENTS = new Set([
-  'div', 'span', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-  'form', 'section', 'header', 'footer', 'main', 'nav',
-  'ul', 'ol', 'li', 'hr', 'br', 'img', 'a', 'label',
-  'input', 'button', 'textarea', 'select', 'option'
+  'div',
+  'span',
+  'p',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'form',
+  'section',
+  'header',
+  'footer',
+  'main',
+  'nav',
+  'ul',
+  'ol',
+  'li',
+  'hr',
+  'br',
+  'img',
+  'a',
+  'label',
+  'input',
+  'button',
+  'textarea',
+  'select',
+  'option'
 ])
 
 /**

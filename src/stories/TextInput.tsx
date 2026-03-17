@@ -26,11 +26,7 @@ export const TextInput = ({
 }: TextInputProps) => (
   <input
     type={type}
-    className={[
-      'sb-input',
-      error && 'sb-input--error',
-      disabled && 'sb-input--disabled',
-    ]
+    className={['sb-input', error && 'sb-input--error', disabled && 'sb-input--disabled']
       .filter(Boolean)
       .join(' ')}
     placeholder={placeholder}

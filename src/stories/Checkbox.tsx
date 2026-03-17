@@ -12,12 +12,7 @@ interface CheckboxProps {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
 
-export const Checkbox = ({
-  label,
-  checked = false,
-  disabled = false,
-  ...props
-}: CheckboxProps) => (
+export const Checkbox = ({ label, checked = false, disabled = false, ...props }: CheckboxProps) => (
   <label className="sb-checkbox">
     <input
       type="checkbox"

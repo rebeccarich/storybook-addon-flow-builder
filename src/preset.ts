@@ -205,7 +205,7 @@ export const viteFinal = async (config: Record<string, unknown>) => {
             return
           }
 
-          const stepIndex = parseInt(match[1], 10)
+          const stepIndex = parseInt(match[1]!, 10)
           const rawHtml = generatePreviewHtml(stepIndex)
 
           if (!rawHtml) {
