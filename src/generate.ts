@@ -296,43 +296,10 @@ export function generateStoriesFile(
     lines.push(`};`)
     lines.push('')
 
-    // Error variant
-    if (step.api.hasApiCall && step.api.errorShape) {
-      lines.push(`export const ${storyName}_Error: StoryObj = {`)
-      lines.push(`  render: () => (`)
-      if (step.layout.length === 1) {
-        lines.push(layoutJsx)
-      } else {
-        lines.push(`    <>`)
-        lines.push(layoutJsx)
-        lines.push(`    </>`)
-      }
-      lines.push(`  ),`)
-      lines.push(`  parameters: {`)
-      lines.push(`    msw: { handlers: handlers.error },`)
-      lines.push(`  },`)
-      lines.push(`};`)
-      lines.push('')
-    }
-
-    // Empty variant
-    if (step.api.hasApiCall && step.api.hasEmptyState) {
-      lines.push(`export const ${storyName}_Empty: StoryObj = {`)
-      lines.push(`  render: () => (`)
-      if (step.layout.length === 1) {
-        lines.push(layoutJsx)
-      } else {
-        lines.push(`    <>`)
-        lines.push(layoutJsx)
-        lines.push(`    </>`)
-      }
-      lines.push(`  ),`)
-      lines.push(`  parameters: {`)
-      lines.push(`    msw: { handlers: handlers.empty },`)
-      lines.push(`  },`)
-      lines.push(`};`)
-      lines.push('')
-    }
+    // Note: error/empty variants are not generated because Claude composes
+    // separate flow steps for each UI state (e.g. a "Login Error" step with
+    // an Alert already in the layout tree). Generating _Error/_Empty variants
+    // with the same layout but different MSW handlers would be redundant.
   }
 
   return lines.join('\n')

@@ -149,7 +149,10 @@ export const viteFinal = async (config: Record<string, unknown>) => {
     name: 'flowbuilder-middleware',
     configureServer(server: {
       middlewares: {
-        use: (path: string, handler: (req: IncomingMessage, res: ServerResponse) => void) => void
+        use: (
+          path: string,
+          handler: (req: IncomingMessage, res: ServerResponse, next: () => void) => void
+        ) => void
       }
       transformIndexHtml: (url: string, html: string) => Promise<string>
     }) {
@@ -182,14 +185,20 @@ export const viteFinal = async (config: Record<string, unknown>) => {
       /* ── GET /__flowbuilder/preview/:stepIndex — serve composed preview HTML ── */
       server.middlewares.use(
         '/__flowbuilder/preview',
-        async (req: IncomingMessage, res: ServerResponse) => {
+        async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+          // Let Vite handle its internal html-proxy module requests
+          const url = req.url ?? ''
+          if (url.includes('html-proxy')) {
+            next()
+            return
+          }
+
           if (req.method !== 'GET') {
             jsonResponse(res, 405, { success: false, error: 'Method not allowed' })
             return
           }
 
           // Parse step index from URL: /0, /1, etc.
-          const url = req.url ?? ''
           const match = url.match(/\/(\d+)/)
           if (!match) {
             jsonResponse(res, 400, { success: false, error: 'Missing step index' })

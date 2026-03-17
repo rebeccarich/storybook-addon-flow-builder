@@ -20,7 +20,7 @@ interface LayoutNode {
 - Use basic HTML elements ("div", "h2", "h3", "p", "span", "form", "hr") as structural wrappers. Give them inline \`style\` props for layout (padding, flexbox, margins, maxWidth, etc.).
 - Nest library components inside HTML wrappers and inside each other to build realistic UIs.
 - Each step should look like a real product screen, not a single isolated component.
-- **Children vs props**: components that display text content (like Alert) use \`children\` in the layout tree, NOT a text/message/content prop. Put the text as a string in the \`children\` array. Example: \`{ "component": "Alert", "props": { "variant": "error" }, "children": ["Email or password is incorrect."] }\`
+- **Children vs props**: some components render their content via \`children\`, others via named props. Check the component's API from the library. For example, Alert uses \`children\` for its message: \`{ "component": "Alert", "props": { "variant": "error" }, "children": ["Email or password is incorrect."] }\`. But Button uses a \`label\` prop: \`{ "component": "Button", "props": { "label": "Sign In", "primary": true } }\`. HTML elements (h2, p, span) always use \`children\` for text.
 - **Images**: for avatar/image src props, use real placeholder URLs like \`https://i.pravatar.cc/150?u=username\` — never use local file paths like \`/avatar.png\`.
 
 **Layout fields per step:**
