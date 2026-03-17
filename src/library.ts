@@ -21,6 +21,8 @@ export function discoverFromStoryIndex(
   for (const [id, entry] of Object.entries(index)) {
     if (entry.type !== 'story') continue
     if (entry.title.startsWith('Flows/')) continue
+    if (entry.title.startsWith('Example/')) continue
+    if (entry.title.startsWith('Configure')) continue
 
     const parts = entry.title.split('/')
     const componentName = parts[parts.length - 1]

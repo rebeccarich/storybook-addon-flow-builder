@@ -1,4 +1,4 @@
-import type { ComponentLibrary, FlowPlan } from './types'
+import type { ComponentLibrary, FlowPlan, FlowStep, LayoutNode } from './types'
 
 export function toPascalCase(s: string): string {
   return s
@@ -44,7 +44,7 @@ export function generateMocksFile(plan: FlowPlan): string {
   ]
 
   for (const step of apiSteps) {
-    const handlerName = toVariableName(step.componentName)
+    const handlerName = toVariableName(step.title)
     const endpoint = step.api.endpoint!
     const method = endpoint.startsWith('POST')
       ? 'post'
@@ -83,14 +83,14 @@ export function generateMocksFile(plan: FlowPlan): string {
 
   lines.push('  success: [')
   for (const step of apiSteps) {
-    lines.push(`    ${toVariableName(step.componentName)}Success,`)
+    lines.push(`    ${toVariableName(step.title)}Success,`)
   }
   lines.push('  ],')
 
   lines.push('  error: [')
   for (const step of apiSteps) {
     if (step.api.errorShape) {
-      lines.push(`    ${toVariableName(step.componentName)}Error,`)
+      lines.push(`    ${toVariableName(step.title)}Error,`)
     }
   }
   lines.push('  ],')
@@ -98,7 +98,7 @@ export function generateMocksFile(plan: FlowPlan): string {
   lines.push('  empty: [')
   for (const step of apiSteps) {
     if (step.api.hasEmptyState) {
-      lines.push(`    ${toVariableName(step.componentName)}Empty,`)
+      lines.push(`    ${toVariableName(step.title)}Empty,`)
     }
   }
   lines.push('  ],')
@@ -127,14 +127,10 @@ function buildImportMap(library?: ComponentLibrary): Map<string, string> {
  * into a relative import from the output directory (e.g. "src/stories/flows/").
  */
 function relativeImportPath(importPath: string, outputDir: string): string {
-  // importPath is relative to project root, e.g. "./src/stories/Login.stories.tsx"
-  // outputDir is relative to project root, e.g. "src/stories/flows"
-  // We need a relative path from outputDir to importPath
   const clean = importPath.replace(/^\.\//, '')
   const outputParts = outputDir.replace(/^\.\//, '').split('/')
   const importParts = clean.split('/')
 
-  // Find common prefix
   let common = 0
   while (
     common < outputParts.length &&
@@ -148,6 +144,59 @@ function relativeImportPath(importPath: string, outputDir: string): string {
   const remaining = importParts.slice(common).join('/')
   const prefix = ups > 0 ? '../'.repeat(ups) : './'
   return prefix + remaining
+}
+
+/**
+ * Derive the component source file import from a story importPath.
+ * e.g. "./src/stories/Button.stories.ts" → "./src/stories/Button"
+ */
+function componentImportFromStory(storyImportPath: string): string {
+  return storyImportPath.replace(/\.stories\.(ts|tsx|js|jsx)$/, '')
+}
+
+const HTML_ELEMENTS = new Set([
+  'div', 'span', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+  'form', 'section', 'header', 'footer', 'main', 'nav',
+  'ul', 'ol', 'li', 'hr', 'br', 'img', 'a', 'label',
+  'input', 'button', 'textarea', 'select', 'option'
+])
+
+/**
+ * Render a LayoutNode tree as JSX string for generated story files.
+ */
+function renderLayoutAsJsx(node: LayoutNode | string, indent: number): string {
+  const pad = '  '.repeat(indent)
+
+  if (typeof node === 'string') {
+    return `${pad}${node}`
+  }
+
+  const isHtml = HTML_ELEMENTS.has(node.component)
+  const tag = isHtml ? node.component : node.component
+
+  // Build props string
+  const propsStr = node.props
+    ? ' ' +
+      Object.entries(node.props)
+        .map(([key, val]) => {
+          if (typeof val === 'string') return `${key}=${JSON.stringify(val)}`
+          return `${key}={${JSON.stringify(val)}}`
+        })
+        .join(' ')
+    : ''
+
+  const children = node.children ?? []
+  if (children.length === 0) {
+    return `${pad}<${tag}${propsStr} />`
+  }
+
+  // If only one text child, inline it
+  if (children.length === 1 && typeof children[0] === 'string') {
+    return `${pad}<${tag}${propsStr}>${children[0]}</${tag}>`
+  }
+
+  const childrenJsx = children.map((c) => renderLayoutAsJsx(c, indent + 1)).join('\n')
+  return `${pad}<${tag}${propsStr}>\n${childrenJsx}\n${pad}</${tag}>`
 }
 
 export interface GenerateStoriesOptions {
@@ -182,21 +231,25 @@ export function generateStoriesFile(
 
   lines.push('')
 
-  // Generate imports from existing story files
-  const importedStories = new Map<string, string>() // componentName → import alias
+  // Collect all unique library components used across all steps
+  const allComponents = new Set<string>()
   for (const step of plan.steps) {
-    if (step.status !== 'exists' || importedStories.has(step.componentName)) continue
-
-    const storyFilePath = importMap.get(step.componentName)
-    if (storyFilePath) {
-      const alias = `${toPascalCase(step.componentName)}Stories`
-      const rel = relativeImportPath(storyFilePath, outputDir)
-      lines.push(`import * as ${alias} from '${rel}';`)
-      importedStories.set(step.componentName, alias)
+    for (const comp of step.componentsUsed) {
+      allComponents.add(comp)
     }
   }
 
-  if (importedStories.size > 0) lines.push('')
+  // Generate imports from component source files
+  for (const compName of allComponents) {
+    const storyFilePath = importMap.get(compName)
+    if (storyFilePath) {
+      const componentPath = componentImportFromStory(storyFilePath)
+      const rel = relativeImportPath(componentPath, outputDir)
+      lines.push(`import { ${compName} } from '${rel}';`)
+    }
+  }
+
+  if (allComponents.size > 0) lines.push('')
 
   lines.push(`const meta: Meta = {`)
   lines.push(`  title: 'Flows/${flowName}',`)
@@ -208,35 +261,20 @@ export function generateStoriesFile(
   for (const step of plan.steps) {
     const storyName = toPascalCase(step.title)
 
-    if (step.status === 'missing') {
-      lines.push(
-        `// GAP: ${step.componentName} — ${step.description ?? 'Component not found in library'}`
-      )
-      lines.push(`export const ${storyName}: StoryObj = {`)
-      lines.push(`  render: () => (`)
-      lines.push(
-        `    <div style={{ padding: 40, textAlign: 'center', border: '2px dashed #ccc', borderRadius: 8 }}>`
-      )
-      lines.push(`      <h3>${step.componentName}</h3>`)
-      lines.push(`      <p>${step.description ?? 'This component needs to be created'}</p>`)
-      lines.push(`    </div>`)
-      lines.push(`  ),`)
-      lines.push(`  parameters: { flowbuilder: { rationale: ${JSON.stringify(step.rationale)} } },`)
-      lines.push(`};`)
-      lines.push('')
-      continue
-    }
-
-    const alias = importedStories.get(step.componentName)
-    const variantName = step.storyVariant ? toPascalCase(step.storyVariant) : 'Default'
+    // Render the layout tree as JSX
+    const layoutJsx = step.layout.map((node) => renderLayoutAsJsx(node, 2)).join('\n')
 
     // Happy path
     lines.push(`export const ${storyName}: StoryObj = {`)
-
-    // Spread from the source story if available
-    if (alias) {
-      lines.push(`  ...${alias}.${variantName},`)
+    lines.push(`  render: () => (`)
+    if (step.layout.length === 1) {
+      lines.push(layoutJsx)
+    } else {
+      lines.push(`    <>`)
+      lines.push(layoutJsx)
+      lines.push(`    </>`)
     }
+    lines.push(`  ),`)
 
     // Build parameters
     const params: string[] = []
@@ -246,9 +284,6 @@ export function generateStoriesFile(
     params.push(`    flowbuilder: { rationale: ${JSON.stringify(step.rationale)} },`)
 
     lines.push(`  parameters: {`)
-    if (alias) {
-      lines.push(`    ...${alias}.${variantName}?.parameters,`)
-    }
     for (const p of params) lines.push(p)
     lines.push(`  },`)
 
@@ -264,13 +299,16 @@ export function generateStoriesFile(
     // Error variant
     if (step.api.hasApiCall && step.api.errorShape) {
       lines.push(`export const ${storyName}_Error: StoryObj = {`)
-      if (alias) {
-        lines.push(`  ...${alias}.${variantName},`)
+      lines.push(`  render: () => (`)
+      if (step.layout.length === 1) {
+        lines.push(layoutJsx)
+      } else {
+        lines.push(`    <>`)
+        lines.push(layoutJsx)
+        lines.push(`    </>`)
       }
+      lines.push(`  ),`)
       lines.push(`  parameters: {`)
-      if (alias) {
-        lines.push(`    ...${alias}.${variantName}?.parameters,`)
-      }
       lines.push(`    msw: { handlers: handlers.error },`)
       lines.push(`  },`)
       lines.push(`};`)
@@ -280,13 +318,16 @@ export function generateStoriesFile(
     // Empty variant
     if (step.api.hasApiCall && step.api.hasEmptyState) {
       lines.push(`export const ${storyName}_Empty: StoryObj = {`)
-      if (alias) {
-        lines.push(`  ...${alias}.${variantName},`)
+      lines.push(`  render: () => (`)
+      if (step.layout.length === 1) {
+        lines.push(layoutJsx)
+      } else {
+        lines.push(`    <>`)
+        lines.push(layoutJsx)
+        lines.push(`    </>`)
       }
+      lines.push(`  ),`)
       lines.push(`  parameters: {`)
-      if (alias) {
-        lines.push(`    ...${alias}.${variantName}?.parameters,`)
-      }
       lines.push(`    msw: { handlers: handlers.empty },`)
       lines.push(`  },`)
       lines.push(`};`)

@@ -1,7 +1,31 @@
 import type { ComponentLibrary, FlowPlan } from './types'
 import { parseFlowPlan } from './parser'
 
-const SYSTEM_PROMPT = `Your role: You are a UX architect embedded inside a Storybook addon called FlowBuilder. Given a component library and a plain-English description of a user flow, you produce a structured JSON plan that maps each screen of the journey to an existing (or missing) component in the library.
+const SYSTEM_PROMPT = `Your role: You are a UX architect embedded inside a Storybook addon called FlowBuilder. Given a component library and a plain-English description of a user flow, you produce a structured JSON plan that **composes** the library's atomic components into complete screen layouts for each step.
+
+## How to use the library
+The component library contains **atomic and composable components** (buttons, inputs, form fields, alerts, avatars, etc.). Your job is to **compose multiple components together** into a realistic screen layout for each step using a layout tree.
+
+Each step's \`layout\` is a JSON array of LayoutNode objects:
+\`\`\`
+interface LayoutNode {
+  component: string      // component name from library, or HTML element: "div", "h2", "p", "span", "form"
+  props?: Record<string, unknown>  // props for library components, or style/className for HTML elements
+  children?: (LayoutNode | string)[]  // nested components or text content
+}
+\`\`\`
+
+**Composition rules:**
+- Use library components by their exact \`name\` from the provided library (e.g. "TextInput", "Button", "FormField").
+- Use basic HTML elements ("div", "h2", "h3", "p", "span", "form", "hr") as structural wrappers. Give them inline \`style\` props for layout (padding, flexbox, margins, maxWidth, etc.).
+- Nest library components inside HTML wrappers and inside each other to build realistic UIs.
+- Each step should look like a real product screen, not a single isolated component.
+
+**Layout fields per step:**
+- \`layout\`: the tree of composed components (array of LayoutNode)
+- \`componentsUsed\`: flat array of library component names used in this step's layout (no HTML elements, no duplicates)
+- \`status\`: "complete" if ALL components in \`componentsUsed\` exist in the library, "partial" if some don't
+- \`missingComponents\`: array of component names in the layout that are NOT in the library (omit if empty)
 
 ## 7 UX Principles (reference by exact name in every rationale)
 1. Progressive Disclosure — reveal complexity gradually; show only what is needed at each step.
@@ -21,104 +45,149 @@ Every step that involves an API call has three states that must be considered:
 Mark hasEmptyState: true for any step where an empty dataset is a realistic scenario (lists, tables, dashboards, search results).
 
 ## Worked example
-Given a library containing LoginForm, OnboardingWizard, DashboardShell, and a brief "User signs up, completes onboarding, sees dashboard", a valid plan is:
+Given a library containing FormField, TextInput, Button, Alert, Avatar and a brief "User logs in with email and password, sees error on bad credentials, then sees welcome page with avatar", a valid plan is:
 
 {
-  "flowName": "SignupToDashboard",
+  "flowName": "LoginFlow",
   "fixtures": {
-    "description": "New user account with empty dashboard data",
+    "description": "User credentials and profile data",
     "entities": [
-      { "name": "user", "shape": { "id": "u_1", "email": "new@example.com", "name": "Alex" } },
-      { "name": "dashboardData", "shape": { "widgets": [], "recentActivity": [] } }
+      { "name": "user", "shape": { "id": "u_1", "email": "alex@example.com", "name": "Alex" } }
     ]
   },
   "steps": [
     {
       "order": 1,
-      "title": "Sign Up",
-      "componentName": "LoginForm",
-      "status": "exists",
-      "storyId": "components-loginform--default",
-      "storyVariant": "Default",
-      "rationale": "Value Before Commitment — the form is minimal (email + password only) so users see value quickly.",
-      "interaction": "fills in email and password, clicks 'Create Account'",
+      "title": "Login Form",
+      "layout": [
+        {
+          "component": "div",
+          "props": { "style": { "padding": 32, "maxWidth": 400, "margin": "0 auto" } },
+          "children": [
+            { "component": "h2", "props": { "style": { "marginBottom": 24 } }, "children": ["Sign In"] },
+            {
+              "component": "FormField",
+              "props": { "label": "Email" },
+              "children": [
+                { "component": "TextInput", "props": { "type": "email", "placeholder": "you@example.com" } }
+              ]
+            },
+            {
+              "component": "FormField",
+              "props": { "label": "Password" },
+              "children": [
+                { "component": "TextInput", "props": { "type": "password", "placeholder": "Enter password" } }
+              ]
+            },
+            {
+              "component": "div",
+              "props": { "style": { "marginTop": 16 } },
+              "children": [
+                { "component": "Button", "props": { "primary": true, "label": "Sign In" } }
+              ]
+            }
+          ]
+        }
+      ],
+      "componentsUsed": ["FormField", "TextInput", "Button"],
+      "status": "complete",
+      "rationale": "Reduce Cognitive Load — the form shows only email and password, nothing else, so the user can focus on the single task of logging in.",
+      "interaction": "fills in email and password, clicks 'Sign In'",
       "api": {
         "hasApiCall": true,
-        "endpoint": "POST /api/auth/signup",
-        "successShape": { "token": "jwt_abc", "user": { "id": "u_1", "email": "new@example.com" } },
-        "errorShape": { "code": "email_taken", "message": "An account with this email already exists." },
+        "endpoint": "POST /api/auth/login",
+        "successShape": { "token": "jwt_abc", "user": { "id": "u_1", "email": "alex@example.com" } },
+        "errorShape": { "code": "invalid_credentials", "message": "Email or password is incorrect." },
         "hasEmptyState": false
       }
     },
     {
       "order": 2,
-      "title": "Onboarding",
-      "componentName": "OnboardingWizard",
-      "status": "exists",
-      "storyId": "components-onboardingwizard--default",
-      "storyVariant": "Default",
-      "rationale": "Progressive Disclosure — the wizard reveals one section at a time so users are not overwhelmed.",
-      "interaction": "completes each wizard step and clicks 'Finish'",
+      "title": "Login Error",
+      "layout": [
+        {
+          "component": "div",
+          "props": { "style": { "padding": 32, "maxWidth": 400, "margin": "0 auto" } },
+          "children": [
+            { "component": "h2", "props": { "style": { "marginBottom": 24 } }, "children": ["Sign In"] },
+            { "component": "Alert", "props": { "variant": "error", "message": "Email or password is incorrect." } },
+            {
+              "component": "FormField",
+              "props": { "label": "Email" },
+              "children": [
+                { "component": "TextInput", "props": { "type": "email", "placeholder": "you@example.com" } }
+              ]
+            },
+            {
+              "component": "FormField",
+              "props": { "label": "Password" },
+              "children": [
+                { "component": "TextInput", "props": { "type": "password", "placeholder": "Enter password" } }
+              ]
+            },
+            {
+              "component": "div",
+              "props": { "style": { "marginTop": 16 } },
+              "children": [
+                { "component": "Button", "props": { "primary": true, "label": "Sign In" } }
+              ]
+            }
+          ]
+        }
+      ],
+      "componentsUsed": ["Alert", "FormField", "TextInput", "Button"],
+      "status": "complete",
+      "rationale": "Error Prevention — the error alert appears inline above the form so the user immediately sees what went wrong and can correct their input without losing context.",
+      "interaction": "corrects credentials, clicks 'Sign In' again",
       "api": {
-        "hasApiCall": true,
-        "endpoint": "PUT /api/users/u_1/profile",
-        "successShape": { "ok": true },
-        "errorShape": { "code": "validation_error", "message": "Please fill in all required fields." },
+        "hasApiCall": false,
         "hasEmptyState": false
       }
     },
     {
       "order": 3,
-      "title": "Verify Email",
-      "componentName": "EmailVerification",
-      "status": "missing",
-      "description": "A confirmation screen telling the user to check their inbox, with a resend button and a countdown timer.",
-      "suggestedComponentName": "EmailVerificationCard",
-      "suggestedProps": ["email", "onResend", "resendCooldownSeconds"],
-      "rationale": "Completion Visibility — the user sees exactly what to do next and how long to wait before resending.",
-      "interaction": "clicks 'Resend Email' or navigates to their inbox",
-      "api": {
-        "hasApiCall": true,
-        "endpoint": "POST /api/auth/resend-verification",
-        "successShape": { "sent": true },
-        "errorShape": { "code": "rate_limited", "message": "Please wait before resending." },
-        "hasEmptyState": false
-      }
-    },
-    {
-      "order": 4,
-      "title": "Empty Dashboard",
-      "componentName": "DashboardShell",
-      "status": "exists",
-      "storyId": "components-dashboardshell--default",
-      "storyVariant": "Default",
-      "rationale": "Empty Before Populated — the first-time dashboard shows an encouraging empty state with a clear call-to-action.",
+      "title": "Welcome Page",
+      "layout": [
+        {
+          "component": "div",
+          "props": { "style": { "padding": 32, "maxWidth": 600, "margin": "0 auto", "textAlign": "center" } },
+          "children": [
+            { "component": "Avatar", "props": { "src": "/avatar.png", "size": "large" } },
+            { "component": "h2", "props": { "style": { "marginTop": 16 } }, "children": ["Welcome back, Alex!"] },
+            { "component": "p", "props": { "style": { "color": "#666" } }, "children": ["You're all set. Here's your dashboard."] }
+          ]
+        }
+      ],
+      "componentsUsed": ["Avatar"],
+      "status": "complete",
+      "rationale": "Recognition Over Recall — the welcome page greets the user by name and shows their avatar, confirming they logged into the right account.",
       "interaction": null,
       "api": {
-        "hasApiCall": true,
-        "endpoint": "GET /api/dashboard",
-        "successShape": { "widgets": [{ "id": "w1", "type": "chart" }], "recentActivity": [{ "id": "a1", "text": "Signed up" }] },
-        "errorShape": { "code": "server_error", "message": "Unable to load your dashboard. Please try again." },
-        "hasEmptyState": true
+        "hasApiCall": false,
+        "hasEmptyState": false
       }
     }
   ]
 }
 
 ## Common mistakes to avoid
-- **Wrong storyId casing**: use the EXACT storyId from the library. Do not convert to kebab-case, camelCase, or any other format.
+- **Wrong component names**: use the EXACT component name from the library. Do not rename or modify them.
 - **Generic rationale**: never write "this is a good UX pattern". Always name the specific principle and explain why it applies to this step.
 - **UI-centric interaction**: "the modal opens" describes what the UI does. Write what the USER does: "clicks the Get Started button".
 - **Missing API states**: if hasApiCall is true, you MUST provide endpoint, successShape, and errorShape.
-- **Inventing components**: if a component is not in the provided library, set status to "missing" with a description. Never pretend a component exists.
+- **Not composing**: each step should compose multiple atomic components into a screen, not just wrap a single page-level component. Use HTML wrappers (div, form) for layout and nest atomic components (inputs, buttons, alerts) inside them.
+- **Using page shells**: never use a single high-level Page/Shell/Layout component as the entire step. Break the screen down into its atomic parts (TextInput, Button, FormField, Alert, etc.) and compose them yourself with HTML wrappers.
 - **Forgetting empty states**: lists, tables, dashboards, and search results should almost always have hasEmptyState: true.
 - **Interaction on terminal steps**: the last step (or any step where the user just reads) must have interaction: null.
-- **Vague missing component specs**: when a component is missing, provide a specific suggestedComponentName (PascalCase, e.g. "PaymentForm") and suggestedProps (array of prop names the component would need).
+- **Wrong componentsUsed**: only list library component names, not HTML elements. No duplicates.
+- **Wrong status**: "complete" means every name in componentsUsed is in the library. "partial" means at least one isn't. Check carefully.
 
 ## Rules
-- Only use components that exist in the provided library. Never invent component names.
-- storyId format: use the exact storyId from the library. Do NOT guess casing or separators.
-- If a step needs a component that doesn't exist, set status to "missing" and provide: a description of what the component does, a suggestedComponentName (PascalCase React component name), and suggestedProps (an array of prop names it would need).
+- ALWAYS compose multiple atomic library components per step to create realistic screen layouts. Never wrap a single page-level component — build each screen from its atomic parts (inputs, buttons, form fields, alerts, avatars, etc.).
+- Use HTML wrapper elements (div, h2, p, span, form) for structure and layout. Apply inline styles for spacing, alignment, and sizing.
+- Use the exact component names from the library. Never invent component names.
+- If a step needs a component not in the library, still include it in the layout — but list it in missingComponents and set status to "partial".
+- componentsUsed must list ONLY library component names (not HTML elements), with no duplicates.
 - Every step with an API call must include endpoint, successShape, and errorShape.
 - rationale must name at least one UX principle by its exact name from the list above.
 - interaction describes what the USER does, not what the UI does.
@@ -168,7 +237,7 @@ Respond with a single JSON object matching the schema described in your instruct
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
+      max_tokens: 16384,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }]
     })
@@ -183,5 +252,5 @@ Respond with a single JSON object matching the schema described in your instruct
   const text = data.content?.[0]?.text
   if (!text) throw new Error('Empty response from Claude')
 
-  return parseFlowPlan(text, storyIds)
+  return parseFlowPlan(text, storyIds, library)
 }

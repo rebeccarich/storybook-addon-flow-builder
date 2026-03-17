@@ -1,12 +1,11 @@
-import React, { useCallback, useRef, useState } from 'react'
-import { useParameter, useStorybookState } from 'storybook/manager-api'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { useParameter, useStorybookApi, useStorybookState } from 'storybook/manager-api'
 import { Button, Placeholder } from 'storybook/internal/components'
 import { styled } from 'storybook/theming'
 
 import { PARAM_KEY } from '../constants'
 import { getLibrary } from '../library'
 import { generateFlow } from '../api'
-import { exportFlowAsZip } from '../export'
 import type {
   ComponentLibrary,
   FlowPlan,
@@ -43,12 +42,13 @@ const cache: FlowCache = {
 const Container = styled.div({
   display: 'flex',
   height: '100%',
+  width: '100%',
   overflow: 'hidden'
 })
 
 const Sidebar = styled.div(({ theme }) => ({
-  width: 320,
-  minWidth: 320,
+  width: 260,
+  minWidth: 260,
   borderRight: `1px solid ${theme.appBorderColor}`,
   overflowY: 'auto',
   padding: 16,
@@ -109,96 +109,16 @@ const ProgressDot = styled.div<{ $state: 'done' | 'current' | 'upcoming' }>(
   })
 )
 
-/* ── Missing component preview ── */
-
-const MissingOverlay = styled.div(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  height: '100%',
-  background: theme.background.content
-}))
-
-const MissingCard = styled.div(({ theme }) => ({
-  textAlign: 'center' as const,
-  padding: '40px 48px',
-  border: `2px dashed ${theme.appBorderColor}`,
-  borderRadius: 12,
-  maxWidth: 480
-}))
-
-const MissingBadge = styled.div(({ theme }) => ({
-  display: 'inline-block',
-  padding: '3px 10px',
-  borderRadius: 4,
-  fontSize: 11,
-  fontWeight: 700,
-  background: theme.color.warning,
-  color: '#fff',
-  marginBottom: 12,
-  letterSpacing: '0.5px'
-}))
-
-const MissingTitle = styled.h2(({ theme }) => ({
-  margin: '0 0 8px',
-  fontSize: 18,
-  color: theme.color.defaultText
-}))
-
-const MissingDescription = styled.p(({ theme }) => ({
-  margin: '0 0 20px',
-  fontSize: 13,
-  color: theme.color.mediumdark,
-  lineHeight: 1.5
-}))
-
-const ComponentSpec = styled.div(({ theme }) => ({
-  textAlign: 'left' as const,
-  padding: 16,
-  borderRadius: 8,
-  background: theme.background.hoverable,
-  border: `1px solid ${theme.appBorderColor}`
-}))
-
-const SpecLabel = styled.div(({ theme }) => ({
-  fontSize: 10,
-  fontWeight: 700,
-  color: theme.color.mediumdark,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.5px',
-  marginBottom: 4
-}))
-
-const SpecComponentName = styled.code(({ theme }) => ({
-  display: 'block',
-  fontSize: 15,
-  fontWeight: 600,
-  color: theme.color.secondary,
-  fontFamily: theme.typography.fonts.mono,
-  marginBottom: 12
-}))
-
-const PropsList = styled.div(({ theme }) => ({
-  fontSize: 12,
-  fontFamily: theme.typography.fonts.mono,
-  color: theme.color.defaultText,
-  lineHeight: 1.8
-}))
-
-const PropName = styled.span(({ theme }) => ({
-  color: theme.color.secondary
-}))
-
 /* ── Sidebar elements ── */
 
 const Textarea = styled.textarea(({ theme }) => ({
   width: '100%',
-  minHeight: 100,
+  minHeight: 80,
   padding: 8,
   border: `1px solid ${theme.appBorderColor}`,
   borderRadius: 4,
   fontFamily: theme.typography.fonts.base,
-  fontSize: 13,
+  fontSize: 12,
   resize: 'vertical',
   background: theme.input.background,
   color: theme.input.color,
@@ -266,7 +186,7 @@ const ComponentName = styled.span(({ theme }) => ({
   color: theme.color.mediumdark
 }))
 
-const GapBadge = styled.span(({ theme }) => ({
+const PartialBadge = styled.span(({ theme }) => ({
   display: 'inline-block',
   padding: '2px 6px',
   borderRadius: 3,
@@ -324,7 +244,19 @@ const SaveStatus = styled.div<{ $success: boolean }>(({ theme, $success }) => ({
   color: $success ? theme.color.positive : theme.color.negativeText
 }))
 
-const GapSummary = styled.div(({ theme }) => ({
+const ComponentList = styled.div(({ theme }) => ({
+  marginTop: 8,
+  fontSize: 11,
+  fontFamily: theme.typography.fonts.mono,
+  color: theme.color.defaultText,
+  lineHeight: 1.8
+}))
+
+const ComponentItem = styled.div<{ $missing?: boolean }>(({ theme, $missing }) => ({
+  color: $missing ? theme.color.warning : theme.color.defaultText
+}))
+
+const MissingSummary = styled.div(({ theme }) => ({
   marginTop: 12,
   padding: 10,
   borderRadius: 6,
@@ -333,18 +265,39 @@ const GapSummary = styled.div(({ theme }) => ({
   fontSize: 11
 }))
 
-const GapSummaryTitle = styled.div(({ theme }) => ({
+const MissingSummaryTitle = styled.div(({ theme }) => ({
   fontWeight: 700,
   color: theme.color.warning,
   marginBottom: 6,
   fontSize: 11
 }))
 
-const GapSummaryItem = styled.div(({ theme }) => ({
+const MissingSummaryItem = styled.div(({ theme }) => ({
   color: theme.color.defaultText,
   padding: '2px 0',
   fontFamily: theme.typography.fonts.mono,
   fontSize: 11
+}))
+
+const BriefDisplay = styled.div(({ theme }) => ({
+  fontSize: 12,
+  color: theme.color.defaultText,
+  padding: '8px 10px',
+  borderRadius: 6,
+  background: theme.background.hoverable,
+  border: `1px solid ${theme.appBorderColor}`,
+  lineHeight: 1.5,
+  marginBottom: 12,
+  fontStyle: 'italic'
+}))
+
+const BriefLabel = styled.div(({ theme }) => ({
+  fontSize: 10,
+  fontWeight: 700,
+  color: theme.color.mediumdark,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.5px',
+  marginBottom: 4
 }))
 
 const PHASES: { key: GeneratingPhase; label: string }[] = [
@@ -355,9 +308,23 @@ const PHASES: { key: GeneratingPhase; label: string }[] = [
 
 export const FlowTab: React.FC = () => {
   const storyState = useStorybookState()
-  const config = useParameter<{ apiKey?: string }>(PARAM_KEY)
+  const api = useStorybookApi()
 
+  // useParameter only works when a story is selected; since FlowTab is a TAB,
+  // there may be no selected story. Fall back to selecting a story first to
+  // make parameters available.
+  const paramConfig = useParameter<{ apiKey?: string }>(PARAM_KEY)
   const storyIndex = storyState.internal_index?.entries ?? {}
+
+  // If no story is selected, select the first one so useParameter works
+  const firstStoryId = Object.keys(storyIndex)[0]
+  useEffect(() => {
+    if (!storyState.storyId && firstStoryId) {
+      api.selectStory(firstStoryId)
+    }
+  }, [storyState.storyId, firstStoryId, api])
+
+  const config = paramConfig
 
   // Initialize from cache
   const [state, _setState] = useState<PanelState>(cache.state)
@@ -419,6 +386,18 @@ export const FlowTab: React.FC = () => {
     [plan, setCurrentStep]
   )
 
+  const postPlanToServer = useCallback(async (flowPlan: FlowPlan, lib: ComponentLibrary) => {
+    try {
+      await fetch('/__flowbuilder/plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: flowPlan, library: lib })
+      })
+    } catch {
+      // Preview won't work but generation still succeeds
+    }
+  }, [])
+
   const handleGenerate = useCallback(async () => {
     const apiKey = config?.apiKey
     if (!apiKey) {
@@ -456,6 +435,9 @@ export const FlowTab: React.FC = () => {
       setCurrentStep(0)
       setState('viewing')
       setSaveStatus(null)
+
+      // Post plan to server for preview rendering
+      await postPlanToServer(result, lib)
     } catch (err) {
       clearPhaseTimers()
       const message = err instanceof Error ? err.message : 'Unknown error'
@@ -482,7 +464,8 @@ export const FlowTab: React.FC = () => {
     setLibrary,
     setPlan,
     setCurrentStep,
-    setSaveStatus
+    setSaveStatus,
+    postPlanToServer
   ])
 
   const handleReset = useCallback(() => {
@@ -492,10 +475,6 @@ export const FlowTab: React.FC = () => {
     setSaveStatus(null)
     setBrief('')
   }, [setState, setPlan, setCurrentStep, setSaveStatus, setBrief])
-
-  const handleExport = useCallback(async () => {
-    if (plan) await exportFlowAsZip(plan, library)
-  }, [plan, library])
 
   const handleSave = useCallback(async () => {
     if (!plan) return
@@ -519,13 +498,13 @@ export const FlowTab: React.FC = () => {
 
   const step: FlowStep | undefined = plan?.steps[currentStep]
 
+  // Preview iframe points to the dynamic preview endpoint with cache-busting
   const iframeSrc =
-    step?.status === 'exists' && step.storyId
-      ? `/iframe.html?id=${encodeURIComponent(step.storyId)}&viewMode=story`
-      : null
+    state === 'viewing' && step ? `/__flowbuilder/preview/${currentStep}?t=${Date.now()}` : null
 
-  // Gather all missing steps for the gap summary
-  const missingSteps = plan?.steps.filter((s) => s.status === 'missing') ?? []
+  // Gather all partial steps for the missing components summary
+  const partialSteps = plan?.steps.filter((s) => s.status === 'partial') ?? []
+  const allMissing = new Set(partialSteps.flatMap((s) => s.missingComponents ?? []))
 
   return (
     <Container>
@@ -561,6 +540,13 @@ export const FlowTab: React.FC = () => {
         )}
 
         {state === 'generating' && (
+          <>
+            <BriefLabel>Prompt</BriefLabel>
+            <BriefDisplay>{brief}</BriefDisplay>
+          </>
+        )}
+
+        {state === 'generating' && (
           <PhaseList>
             {PHASES.map(({ key, label }, i) => {
               const currentIndex = PHASES.findIndex((p) => p.key === phase)
@@ -575,6 +561,9 @@ export const FlowTab: React.FC = () => {
 
         {state === 'viewing' && plan && step && (
           <>
+            <BriefLabel>Prompt</BriefLabel>
+            <BriefDisplay>{brief}</BriefDisplay>
+
             <SidebarHeader>
               <FlowTitle>{plan.flowName}</FlowTitle>
               <Button size="small" onClick={handleReset}>
@@ -605,33 +594,35 @@ export const FlowTab: React.FC = () => {
 
             <StepTitle>{step.title}</StepTitle>
             <ComponentName>
-              {step.componentName}
-              {step.storyVariant && ` / ${step.storyVariant}`}
-              {step.status === 'missing' && <GapBadge>GAP</GapBadge>}
+              {step.componentsUsed.join(', ') || 'HTML only'}
+              {step.status === 'partial' && <PartialBadge>PARTIAL</PartialBadge>}
               {step.api.hasApiCall && <ApiBadge>API</ApiBadge>}
             </ComponentName>
+
+            {step.componentsUsed.length > 0 && (
+              <ComponentList>
+                {step.componentsUsed.map((name) => (
+                  <ComponentItem key={name} $missing={step.missingComponents?.includes(name)}>
+                    {step.missingComponents?.includes(name) ? '\u26A0 ' : '\u2713 '}
+                    {name}
+                  </ComponentItem>
+                ))}
+              </ComponentList>
+            )}
 
             <Rationale>{step.rationale}</Rationale>
 
             {step.interaction && <InteractionHint>Next: {step.interaction}</InteractionHint>}
 
-            {step.status === 'missing' && step.description && (
-              <Placeholder>
-                <p>{step.description}</p>
-              </Placeholder>
-            )}
-
-            {missingSteps.length > 0 && (
-              <GapSummary>
-                <GapSummaryTitle>
-                  {missingSteps.length} component{missingSteps.length > 1 ? 's' : ''} to create
-                </GapSummaryTitle>
-                {missingSteps.map((s, i) => (
-                  <GapSummaryItem key={i}>
-                    {s.suggestedComponentName ?? s.componentName}
-                  </GapSummaryItem>
+            {allMissing.size > 0 && (
+              <MissingSummary>
+                <MissingSummaryTitle>
+                  {allMissing.size} missing component{allMissing.size > 1 ? 's' : ''}
+                </MissingSummaryTitle>
+                {Array.from(allMissing).map((name) => (
+                  <MissingSummaryItem key={name}>{name}</MissingSummaryItem>
                 ))}
-              </GapSummary>
+              </MissingSummary>
             )}
 
             <Separator />
@@ -639,9 +630,6 @@ export const FlowTab: React.FC = () => {
             <ButtonRow>
               <Button variant="solid" size="small" onClick={handleSave}>
                 Save to Project
-              </Button>
-              <Button size="small" onClick={handleExport}>
-                Download Zip
               </Button>
             </ButtonRow>
             {saveStatus && (
@@ -683,39 +671,7 @@ export const FlowTab: React.FC = () => {
         {state === 'generating' && <PreviewPlaceholder>Generating your flow...</PreviewPlaceholder>}
 
         {state === 'viewing' && step && iframeSrc && (
-          <StoryIframe key={step.storyId} src={iframeSrc} title={step.title} />
-        )}
-
-        {state === 'viewing' && step && step.status === 'missing' && (
-          <MissingOverlay>
-            <MissingCard>
-              <MissingBadge>COMPONENT NEEDED</MissingBadge>
-              <MissingTitle>{step.title}</MissingTitle>
-              <MissingDescription>
-                {step.description ?? 'This component needs to be created'}
-              </MissingDescription>
-              <ComponentSpec>
-                <SpecLabel>Suggested component</SpecLabel>
-                <SpecComponentName>
-                  {'<'}
-                  {step.suggestedComponentName ?? step.componentName}
-                  {' />'}
-                </SpecComponentName>
-                {step.suggestedProps && step.suggestedProps.length > 0 && (
-                  <>
-                    <SpecLabel>Props</SpecLabel>
-                    <PropsList>
-                      {step.suggestedProps.map((prop, i) => (
-                        <div key={i}>
-                          <PropName>{prop}</PropName>
-                        </div>
-                      ))}
-                    </PropsList>
-                  </>
-                )}
-              </ComponentSpec>
-            </MissingCard>
-          </MissingOverlay>
+          <StoryIframe key={`${currentStep}-${Date.now()}`} src={iframeSrc} title={step.title} />
         )}
 
         {state === 'error' && (

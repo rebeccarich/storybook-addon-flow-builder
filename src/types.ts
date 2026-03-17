@@ -6,16 +6,19 @@ export interface FlowStepApi {
   hasEmptyState: boolean
 }
 
+export interface LayoutNode {
+  component: string // component name from library, or "div"/"h2"/"p" for basic HTML
+  props?: Record<string, unknown>
+  children?: (LayoutNode | string)[] // nested components or text content
+}
+
 export interface FlowStep {
   order: number
   title: string
-  componentName: string
-  status: 'exists' | 'missing'
-  storyId?: string
-  storyVariant?: string
-  description?: string
-  suggestedComponentName?: string
-  suggestedProps?: string[]
+  layout: LayoutNode[]
+  componentsUsed: string[]
+  status: 'complete' | 'partial'
+  missingComponents?: string[]
   rationale: string
   interaction: string | null
   api: FlowStepApi
