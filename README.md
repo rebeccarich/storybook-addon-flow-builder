@@ -14,6 +14,8 @@
 
 AI-driven user flow creation for Storybook. Describe a user journey in plain English, and the addon reads your component library, composes your atomic components into realistic screen layouts, and renders live previews — all powered by Claude.
 
+Read about the build journey: [Building an AI-Powered Flow Builder for Storybook](https://medium.com/p/24596b63d359)
+
 ## How it works
 
 ### Describe your flow
