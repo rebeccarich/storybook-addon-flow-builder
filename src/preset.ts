@@ -7,6 +7,7 @@ import {
   generateStoriesFile,
   toPascalCase
 } from './generate'
+import { HTML_ELEMENTS } from './constants'
 import type { ComponentLibrary, FlowPlan, LayoutNode } from './types'
 
 /* ── In-memory store for preview data ── */
@@ -30,37 +31,6 @@ function buildImportMap(library: ComponentLibrary): Map<string, string> {
   }
   return map
 }
-
-const HTML_ELEMENTS = new Set([
-  'div',
-  'span',
-  'p',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'form',
-  'section',
-  'header',
-  'footer',
-  'main',
-  'nav',
-  'ul',
-  'ol',
-  'li',
-  'hr',
-  'br',
-  'img',
-  'a',
-  'label',
-  'input',
-  'button',
-  'textarea',
-  'select',
-  'option'
-])
 
 function renderLayoutNode(node: LayoutNode | string, importMap: Map<string, string>): string {
   if (typeof node === 'string') {
@@ -128,11 +98,11 @@ root.render(${rendered})
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
-    let data = ''
-    req.on('data', (chunk: string) => {
-      data += chunk
+    const chunks: Buffer[] = []
+    req.on('data', (chunk: Buffer) => {
+      chunks.push(chunk)
     })
-    req.on('end', () => resolve(data))
+    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')))
     req.on('error', reject)
   })
 }

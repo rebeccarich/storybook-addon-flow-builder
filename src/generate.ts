@@ -1,3 +1,4 @@
+import { HTML_ELEMENTS } from './constants'
 import type { ComponentLibrary, FlowPlan, LayoutNode } from './types'
 
 export function toPascalCase(s: string): string {
@@ -153,37 +154,6 @@ function relativeImportPath(importPath: string, outputDir: string): string {
 function componentImportFromStory(storyImportPath: string): string {
   return storyImportPath.replace(/\.stories\.(ts|tsx|js|jsx)$/, '')
 }
-
-const HTML_ELEMENTS = new Set([
-  'div',
-  'span',
-  'p',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'form',
-  'section',
-  'header',
-  'footer',
-  'main',
-  'nav',
-  'ul',
-  'ol',
-  'li',
-  'hr',
-  'br',
-  'img',
-  'a',
-  'label',
-  'input',
-  'button',
-  'textarea',
-  'select',
-  'option'
-])
 
 /**
  * Render a LayoutNode tree as JSX string for generated story files.

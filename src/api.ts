@@ -229,30 +229,48 @@ ${brief}
 
 Respond with a single JSON object matching the schema described in your instructions. No markdown fencing.`
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 16384,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userMessage }]
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 120_000)
+
+  let response: Response
+  try {
+    response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 16384,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userMessage }]
+      }),
+      signal: controller.signal
     })
-  })
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Timeout: Claude API did not respond within 2 minutes')
+    }
+    throw err
+  } finally {
+    clearTimeout(timeout)
+  }
 
   if (!response.ok) {
     const body = await response.text()
     throw new Error(`Claude API error (${response.status}): ${body}`)
   }
 
-  const data = await response.json()
+  const data = (await response.json()) as {
+    content?: { type?: string; text?: string }[]
+  }
   const text = data.content?.[0]?.text
-  if (!text) throw new Error('Empty response from Claude')
+  if (!text || typeof text !== 'string') {
+    throw new Error('Invalid response from Claude: missing text content')
+  }
 
   return parseFlowPlan(text, storyIds, library)
 }

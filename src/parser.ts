@@ -1,35 +1,5 @@
+import { HTML_ELEMENTS } from './constants'
 import type { ComponentLibrary, FlowPlan, FlowStep, LayoutNode } from './types'
-
-const HTML_ELEMENTS = new Set([
-  'div',
-  'span',
-  'p',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'form',
-  'section',
-  'header',
-  'footer',
-  'main',
-  'nav',
-  'ul',
-  'ol',
-  'li',
-  'hr',
-  'br',
-  'img',
-  'a',
-  'label',
-  'input',
-  'button',
-  'textarea',
-  'select',
-  'option'
-])
 
 export function parseFlowPlan(
   raw: string,
@@ -86,8 +56,8 @@ function validateStep(
   const missing: string[] = []
   for (const name of foundComponents) {
     if (!libraryNames.has(name)) {
-      // Try fuzzy match against library names
-      const match = findClosestName(name, libraryNames)
+      // Try case-insensitive match against library names
+      const match = findCaseInsensitiveMatch(name, libraryNames)
       if (match) {
         // Fix the name in the layout tree
         renameInLayoutTree(step.layout, name, match)
@@ -151,7 +121,7 @@ function renameInLayoutTree(
   }
 }
 
-function findClosestName(target: string, validNames: Set<string>): string | null {
+function findCaseInsensitiveMatch(target: string, validNames: Set<string>): string | null {
   const normalised = target.toLowerCase()
   for (const name of validNames) {
     if (name.toLowerCase() === normalised) {
