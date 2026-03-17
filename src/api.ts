@@ -20,6 +20,8 @@ interface LayoutNode {
 - Use basic HTML elements ("div", "h2", "h3", "p", "span", "form", "hr") as structural wrappers. Give them inline \`style\` props for layout (padding, flexbox, margins, maxWidth, etc.).
 - Nest library components inside HTML wrappers and inside each other to build realistic UIs.
 - Each step should look like a real product screen, not a single isolated component.
+- **Children vs props**: components that display text content (like Alert) use \`children\` in the layout tree, NOT a text/message/content prop. Put the text as a string in the \`children\` array. Example: \`{ "component": "Alert", "props": { "variant": "error" }, "children": ["Email or password is incorrect."] }\`
+- **Images**: for avatar/image src props, use real placeholder URLs like \`https://i.pravatar.cc/150?u=username\` — never use local file paths like \`/avatar.png\`.
 
 **Layout fields per step:**
 - \`layout\`: the tree of composed components (array of LayoutNode)
@@ -110,7 +112,7 @@ Given a library containing FormField, TextInput, Button, Alert, Avatar and a bri
           "props": { "style": { "padding": 32, "maxWidth": 400, "margin": "0 auto" } },
           "children": [
             { "component": "h2", "props": { "style": { "marginBottom": 24 } }, "children": ["Sign In"] },
-            { "component": "Alert", "props": { "variant": "error", "message": "Email or password is incorrect." } },
+            { "component": "Alert", "props": { "variant": "error" }, "children": ["Email or password is incorrect."] },
             {
               "component": "FormField",
               "props": { "label": "Email" },
@@ -152,7 +154,7 @@ Given a library containing FormField, TextInput, Button, Alert, Avatar and a bri
           "component": "div",
           "props": { "style": { "padding": 32, "maxWidth": 600, "margin": "0 auto", "textAlign": "center" } },
           "children": [
-            { "component": "Avatar", "props": { "src": "/avatar.png", "size": "large" } },
+            { "component": "Avatar", "props": { "name": "Alex", "src": "https://i.pravatar.cc/150?u=alex", "size": "large" } },
             { "component": "h2", "props": { "style": { "marginTop": 16 } }, "children": ["Welcome back, Alex!"] },
             { "component": "p", "props": { "style": { "color": "#666" } }, "children": ["You're all set. Here's your dashboard."] }
           ]
