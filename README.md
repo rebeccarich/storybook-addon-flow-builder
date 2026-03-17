@@ -1,8 +1,20 @@
-# Storybook Addon Flow Builder
+<h1 style="display: flex; align-items:center; justify-content:center;">
+  <img src="./logo.png"/>
+  <span style="padding-left:24px;">Storybook Addon Flow Builder
+  <p>    
+  <a href="https://github.com/kyechan99/capsule-render/issues">
+    <img alt="Issues" src="https://img.shields.io/rebeccarich/storybook-addon-flow-builder?color=01a889" />
+  </a>
+  <a href="https://github.com/rebeccarich/storybook-addon-flow-builder/pulls">
+    <img alt="GH pull requests" src="https://img.shields.io/github/issues-pr/rebeccarich/storybook-addon-flow-builder?color=01a889" />
+  </a>
+</p>
+  </span>
+</h1>
 
 AI-driven user flow creation for Storybook. Describe a user journey in plain English, and the addon reads your component library, composes your atomic components into realistic screen layouts, and renders live previews — all powered by Claude.
 
-## Screenshots
+## How it works
 
 ### Describe your flow
 
@@ -32,7 +44,9 @@ Each step renders a **live preview** using your actual components — not mockup
 
 ![Step 3 — welcome page with avatar](screenshots/06-step3-welcome.png)
 
-## Installation
+## Installation 🚧
+
+The addon is not published yet. Check back soon!
 
 ```sh
 npm install --save-dev storybook-addon-flow-builder
@@ -42,9 +56,9 @@ Register in `.storybook/main.ts`:
 
 ```ts
 const config = {
-  addons: ['storybook-addon-flow-builder'],
-};
-export default config;
+  addons: ['storybook-addon-flow-builder']
+}
+export default config
 ```
 
 ## Setup
@@ -55,11 +69,11 @@ Add your Anthropic API key in `.storybook/preview.ts`:
 const preview = {
   parameters: {
     flowbuilder: {
-      apiKey: import.meta.env.STORYBOOK_FLOWBUILDER_API_KEY,
-    },
-  },
-};
-export default preview;
+      apiKey: import.meta.env.STORYBOOK_FLOWBUILDER_API_KEY
+    }
+  }
+}
+export default preview
 ```
 
 Create a `.env` file (gitignored):
@@ -81,11 +95,11 @@ Generated files include fixtures, MSW mock handlers, and flow stories with rende
 
 ## Example prompts
 
-- *User logs in with email and password, sees an error on bad credentials, then sees a welcome page with their avatar*
-- *User browses a product card, adds to cart, enters shipping info, reviews order, and confirms payment*
-- *User opens account settings, toggles email notifications on/off, changes their display name, and saves with a success confirmation*
-- *New user sees a welcome modal, fills out a 3-step profile form with progress bar, and lands on an empty dashboard*
-- *User searches for items, sees a loading spinner, gets results as cards, then filters by category*
+- _User logs in with email and password, sees an error on bad credentials, then sees a welcome page with their avatar_
+- _User browses a product card, adds to cart, enters shipping info, reviews order, and confirms payment_
+- _User opens account settings, toggles email notifications on/off, changes their display name, and saves with a success confirmation_
+- _New user sees a welcome modal, fills out a 3-step profile form with progress bar, and lands on an empty dashboard_
+- _User searches for items, sees a loading spinner, gets results as cards, then filters by category_
 
 ## Development
 
