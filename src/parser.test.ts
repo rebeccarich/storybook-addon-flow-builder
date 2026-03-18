@@ -52,7 +52,7 @@ describe('parseFlowPlan', () => {
     const plan = parseFlowPlan(makePlan(), storyIds, library)
     expect(plan.flowName).toBe('TestFlow')
     expect(plan.steps).toHaveLength(1)
-    expect(plan.steps[0].title).toBe('Step One')
+    expect(plan.steps[0]!.title).toBe('Step One')
   })
 
   it('strips markdown code fences', () => {
@@ -99,7 +99,7 @@ describe('parseFlowPlan', () => {
 
   it('extracts componentsUsed from layout tree, excluding HTML elements', () => {
     const plan = parseFlowPlan(makePlan(), storyIds, library)
-    const step = plan.steps[0]
+    const step = plan.steps[0]!
     expect(step.componentsUsed).toContain('Button')
     expect(step.componentsUsed).toContain('TextInput')
     expect(step.componentsUsed).toContain('FormField')
@@ -108,8 +108,8 @@ describe('parseFlowPlan', () => {
 
   it('sets status to complete when all components exist', () => {
     const plan = parseFlowPlan(makePlan(), storyIds, library)
-    expect(plan.steps[0].status).toBe('complete')
-    expect(plan.steps[0].missingComponents).toBeUndefined()
+    expect(plan.steps[0]!.status).toBe('complete')
+    expect(plan.steps[0]!.missingComponents).toBeUndefined()
   })
 
   it('sets status to partial for unknown components', () => {
@@ -130,8 +130,8 @@ describe('parseFlowPlan', () => {
       ]
     })
     const plan = parseFlowPlan(raw, storyIds, library)
-    expect(plan.steps[0].status).toBe('partial')
-    expect(plan.steps[0].missingComponents).toEqual(['MagicWidget'])
+    expect(plan.steps[0]!.status).toBe('partial')
+    expect(plan.steps[0]!.missingComponents).toEqual(['MagicWidget'])
   })
 
   it('fixes case-insensitive component name mismatches', () => {
@@ -153,8 +153,8 @@ describe('parseFlowPlan', () => {
       ]
     })
     const plan = parseFlowPlan(raw2, storyIds, library)
-    expect(plan.steps[0].componentsUsed).toContain('TextInput')
-    expect(plan.steps[0].status).toBe('complete')
+    expect(plan.steps[0]!.componentsUsed).toContain('TextInput')
+    expect(plan.steps[0]!.status).toBe('complete')
   })
 
   it('defaults api when missing', () => {
@@ -174,7 +174,7 @@ describe('parseFlowPlan', () => {
       ]
     })
     const plan = parseFlowPlan(raw, storyIds, library)
-    expect(plan.steps[0].api).toEqual({ hasApiCall: false, hasEmptyState: false })
+    expect(plan.steps[0]!.api).toEqual({ hasApiCall: false, hasEmptyState: false })
   })
 
   it('disables hasApiCall when endpoint/successShape missing', () => {
@@ -195,7 +195,7 @@ describe('parseFlowPlan', () => {
       ]
     })
     const plan = parseFlowPlan(raw, storyIds, library)
-    expect(plan.steps[0].api.hasApiCall).toBe(false)
+    expect(plan.steps[0]!.api.hasApiCall).toBe(false)
   })
 
   it('defaults layout to empty array when not provided', () => {
@@ -215,6 +215,6 @@ describe('parseFlowPlan', () => {
       ]
     })
     const plan = parseFlowPlan(raw, storyIds, library)
-    expect(plan.steps[0].layout).toEqual([])
+    expect(plan.steps[0]!.layout).toEqual([])
   })
 })
