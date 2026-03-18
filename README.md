@@ -1,16 +1,11 @@
-<h1 style="display: flex; align-items:center; justify-content:center;">
-  <img src="./logo.png"/>
-  <span style="padding-left:24px;">Storybook Addon Flow Builder
-  <p>    
-  <a href="https://github.com/rebeccarich/storybook-addon-flow-builder/issues">
-    <img alt="Issues" src="https://img.shields.io/rebeccarich/storybook-addon-flow-builder?color=01a889" />
-  </a>
-  <a href="https://github.com/rebeccarich/storybook-addon-flow-builder/pulls">
-    <img alt="GH pull requests" src="https://img.shields.io/github/issues-pr/rebeccarich/storybook-addon-flow-builder?color=01a889" />
-  </a>
-</p>
-  </span>
-</h1>
+<table border="0" cellspacing="0" cellpadding="0"><tr>
+<td><img src="./logo.png" width="180" /></td>
+<td>
+<h1>Storybook Addon Flow Builder</h1>
+<a href="https://github.com/rebeccarich/storybook-addon-flow-builder/issues"><img alt="Issues" src="https://img.shields.io/github/issues/rebeccarich/storybook-addon-flow-builder?color=01a889" /></a>
+<a href="https://github.com/rebeccarich/storybook-addon-flow-builder/pulls"><img alt="Pull requests" src="https://img.shields.io/github/issues-pr/rebeccarich/storybook-addon-flow-builder?color=01a889" /></a>
+</td>
+</tr></table>
 
 AI-driven user flow creation for Storybook. Describe a user journey in plain English, and the addon reads your component library, composes your atomic components into realistic screen layouts, and renders live previews — all powered by Claude.
 
