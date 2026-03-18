@@ -22,9 +22,9 @@ describe('discoverFromStoryIndex', () => {
     })
     const lib = discoverFromStoryIndex(index)
     expect(lib.components).toHaveLength(1)
-    expect(lib.components[0].name).toBe('Button')
-    expect(lib.components[0].variants).toEqual(['Primary', 'Secondary'])
-    expect(lib.components[0].importPath).toBe('./src/stories/Button.stories.ts')
+    expect(lib.components[0]!.name).toBe('Button')
+    expect(lib.components[0]!.variants).toEqual(['Primary', 'Secondary'])
+    expect(lib.components[0]!.importPath).toBe('./src/stories/Button.stories.ts')
   })
 
   it('skips non-story entries', () => {
@@ -100,7 +100,7 @@ describe('discoverFromStoryIndex', () => {
     })
     const lib = discoverFromStoryIndex(index)
     expect(lib.components).toHaveLength(1)
-    expect(lib.components[0].variants).toEqual(['Info', 'Error', 'Success'])
+    expect(lib.components[0]!.variants).toEqual(['Info', 'Error', 'Success'])
   })
 
   it('handles deeply nested titles', () => {
@@ -112,6 +112,6 @@ describe('discoverFromStoryIndex', () => {
       }
     })
     const lib = discoverFromStoryIndex(index)
-    expect(lib.components[0].name).toBe('TextInput')
+    expect(lib.components[0]!.name).toBe('TextInput')
   })
 })
